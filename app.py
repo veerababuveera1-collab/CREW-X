@@ -4,178 +4,195 @@ import requests
 from crewai import Agent, Task, Crew, Process
 from streamlit_lottie import st_lottie
 
-# --- 1. Ultra-Modern CSS Styling ---
-def apply_custom_design():
+# --- 1. UI & Theme Configuration ---
+def apply_modern_theme():
     st.markdown("""
         <style>
-        /* Main Background */
+        /* Main page background */
         .stApp {
-            background: radial-gradient(circle at top right, #1e1e2f, #11111d);
-            color: #e0e0e0;
+            background-color: #F4F7F9;
         }
         
-        /* Glassmorphism Container */
-        .main-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 40px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-            margin-bottom: 25px;
-        }
-
-        /* Neon Branding */
-        .neon-brand {
-            font-size: 3.5rem;
-            font-weight: 900;
-            background: linear-gradient(90deg, #00f2fe, #4facfe);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-align: center;
-            letter-spacing: 5px;
-            margin-bottom: 10px;
-        }
-
-        /* Sidebar Styling */
+        /* Sidebar styling */
         [data-testid="stSidebar"] {
-            background-color: rgba(0, 0, 0, 0.3);
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: #ffffff;
+            border-right: 1px solid #E6E8EB;
         }
 
-        /* Buttons */
-        div.stButton > button:first-child {
-            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
-            color: #000;
-            border: none;
-            padding: 15px 40px;
-            border-radius: 12px;
+        /* Card container for parameters */
+        .param-card {
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #E6E8EB;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        /* Branding Text */
+        .brand-title {
+            font-family: 'Inter', sans-serif;
+            color: #1A202C;
             font-weight: 800;
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 0px;
+        }
+        
+        .brand-subtitle {
+            text-align: center;
+            color: #718096;
+            font-size: 1rem;
+            margin-bottom: 30px;
+        }
+
+        /* Custom Buttons */
+        div.stButton > button:first-child {
+            background: linear-gradient(135deg, #3182CE 0%, #2B6CB0 100%);
+            color: white;
+            border-radius: 10px;
+            border: none;
+            padding: 12px 24px;
+            font-weight: 600;
             width: 100%;
-            transition: all 0.4s;
-            text-transform: uppercase;
+            transition: all 0.3s;
         }
         
         div.stButton > button:hover {
-            box-shadow: 0 0 25px rgba(0, 242, 254, 0.6);
-            transform: scale(1.02);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(49, 130, 206, 0.4);
+        }
+
+        /* Result Area */
+        .report-box {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            border-left: 6px solid #3182CE;
+            line-height: 1.7;
+            color: #2D3748;
         }
         </style>
     """, unsafe_allow_html=True)
 
-# --- 2. Animations ---
-def load_lottie(url):
-    try:
-        r = requests.get(url)
-        return r.json() if r.status_code == 200 else None
-    except:
+def load_lottieurl(url: str):
+    r = requests.get(url)
+    if r.status_code != 200:
         return None
+    return r.json()
 
-# --- UI Initial Settings ---
-st.set_page_config(page_title="CREW-X | AI Intelligence", layout="wide", page_icon="⚡")
-apply_custom_design()
+# --- 2. Initial Setup ---
+st.set_page_config(page_title="CREW-X | Next-Gen AI", layout="wide", page_icon="⚡")
+apply_modern_theme()
 
-# Branding
-st.markdown("<h1 class='neon-brand'>CREW-X</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; opacity: 0.7;'>Next-Gen Multi-Agent Research Framework</p>", unsafe_allow_html=True)
-
-# --- Sidebar ---
+# --- 3. Sidebar: Settings & Status ---
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/4712/4712139.png", width=80)
-    st.title("Settings")
-    api_key = st.text_input("OpenAI API Key:", type="password")
+    st.markdown("## ⚙️ Settings")
+    api_key = st.text_input("OpenAI API Key:", type="password", placeholder="sk-...")
+    
     if api_key:
         os.environ["OPENAI_API_KEY"] = api_key
     
     st.markdown("---")
-    st.write("**Agents Active:**")
+    st.markdown("### 🤖 Agents Active")
     st.success("✅ Researcher")
     st.success("✅ Writer")
+    
+    st.markdown("---")
+    lottie_sidebar = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_mDnmhAgZkb.json")
+    if lottie_sidebar:
+        st_lottie(lottie_sidebar, height=150)
 
-# --- Main Layout ---
-col_left, col_right = st.columns([1.2, 1], gap="large")
+# --- 4. Main Content Area ---
+st.markdown("<h1 class='brand-title'>CREW-X</h1>", unsafe_allow_html=True)
+st.markdown("<p class='brand-subtitle'>Next-Gen Multi-Agent Research Framework</p>", unsafe_allow_html=True)
 
-with col_left:
-    st.markdown('<div class="main-card">', unsafe_allow_html=True)
+col_input, col_anim = st.columns([1.5, 1], gap="large")
+
+with col_input:
+    st.markdown('<div class="param-card">', unsafe_allow_html=True)
     st.subheader("🎯 Research Parameters")
-    topic = st.text_input("టాపిక్ ఎంటర్ చేయండి:", placeholder="e.g. Impact of Quantum Computing")
     
-    tone = st.selectbox("వ్యాసం యొక్క శైలి (Tone):", ["Professional", "Conversational", "Academic", "Creative"])
+    topic = st.text_input("టాపిక్ ఎంటర్ చేయండి:", placeholder="ఉదా: Future of Agentic AI")
     
-    language = st.radio("భాష (Language):", ["Tanglish (Telugu + English)", "Pure Telugu", "English"], horizontal=True)
+    c1, c2 = st.columns(2)
+    with c1:
+        tone = st.selectbox("వ్యాసం యొక్క శైలి (Tone):", ["Professional", "Conversational", "Academic", "Creative"])
+    with c2:
+        language = st.radio("భాష (Language):", ["Tanglish (Mix)", "Pure Telugu", "English"], horizontal=False)
+    
     st.markdown('</div>', unsafe_allow_html=True)
+    run_btn = st.button("🚀 Start Intelligence Engine")
 
-with col_right:
-    ai_anim = load_lottie("https://assets1.lottiefiles.com/packages/lf20_qpwb7taz.json")
-    if ai_anim:
-        st_lottie(ai_anim, height=250)
-    
-    start_engine = st.button("🚀 Execute Agents")
+with col_anim:
+    lottie_main = load_lottieurl("https://assets9.lottiefiles.com/packages/lf20_ai9m8yca.json")
+    if lottie_main:
+        st_lottie(lottie_main, height=300)
 
-# --- Execution Logic ---
-if start_engine:
+# --- 5. Execution Logic ---
+if run_btn:
     if not api_key:
-        st.error("🚨 OpenAI API Key అవసరం!")
+        st.error("🚨 దయచేసి సైడ్‌బార్‌లో OpenAI API Key ఎంటర్ చేయండి!")
     elif not topic:
-        st.warning("⚠️ దయచేసి ఒక టాపిక్ ఇవ్వండి.")
+        st.warning("⚠️ దయచేసి ఒక టాపిక్ ఇవ్వండి!")
     else:
         try:
-            with st.status("🏗️ CREW-X Engines Warming Up...", expanded=True) as status:
+            with st.status("🧠 ఏజెంట్లు విశ్లేషిస్తున్నారు...", expanded=True) as status:
                 
-                # 1. Agents Definition
+                # Agent Definitions
                 researcher = Agent(
-                    role='Lead Research Specialist',
-                    goal=f'{topic} గురించి సమగ్రమైన డేటా సేకరించడం',
-                    backstory="మీరు ఒక ప్రపంచ స్థాయి పరిశోధకులు. డేటాలో దాగి ఉన్న నిజాలను వెలికితీయడం మీ నైపుణ్యం.",
-                    verbose=True
+                    role='Senior Research Analyst',
+                    goal=f'{topic} గురించి లోతైన సమాచారాన్ని సేకరించడం',
+                    backstory="మీరు ఒక నిపుణులైన పరిశోధకులు. ఇంటర్నెట్ నుండి ఖచ్చితమైన సమాచారాన్ని వెలికితీస్తారు.",
+                    verbose=True,
+                    allow_delegation=False
                 )
 
                 writer = Agent(
-                    role='Senior Content Architect',
-                    goal=f'రీసెర్చ్ డేటాను ఒక {tone} వ్యాసంగా మార్చడం',
-                    backstory="మీరు సంక్లిష్టమైన విషయాలను చాలా ఆకర్షణీయంగా రాయగలరు.",
-                    verbose=True
+                    role='Tech Content Strategist',
+                    goal=f'రీసెర్చ్ డేటా ఆధారంగా {topic} పై {tone} వ్యాసం రాయడం',
+                    backstory="మీరు క్లిష్టమైన విషయాలను సామాన్యులకు అర్థమయ్యేలా, ఆకర్షణీయంగా రాయగలరు.",
+                    verbose=True,
+                    allow_delegation=False
                 )
 
-                # 2. Task Definition
-                task_research = Task(
-                    description=f"{topic} మీద తాజా అప్‌డేట్స్ మరియు 5 ముఖ్యమైన ఫ్యాక్ట్స్ సేకరించు.",
+                # Task Definitions
+                t1 = Task(
+                    description=f"{topic} గురించి 5 ముఖ్యమైన అప్‌డేట్స్ మరియు ఫ్యాక్ట్స్ సేకరించు.",
                     agent=researcher,
-                    expected_output="Detailed analysis with bullet points."
+                    expected_output="వివరణాత్మకమైన బుల్లెట్ పాయింట్స్."
                 )
 
-                task_writing = Task(
-                    description=f"రీసెర్చ్ ఆధారంగా {language} లో ఒక అద్భుతమైన వ్యాసం రాయి. టోన్ {tone} గా ఉండాలి.",
+                t2 = Task(
+                    description=f"సేకరించిన సమాచారాన్ని ఉపయోగించి {language} భాషలో ఒక ప్రొఫెషనల్ వ్యాసం రాయి. టోన్ {tone} గా ఉండాలి.",
                     agent=writer,
-                    expected_output="A structured 500-word article."
+                    expected_output="300-500 పదాల వ్యాసం."
                 )
 
-                # 3. Crew Setup
-                crew_x = Crew(
+                # Crew Formation
+                crew = Crew(
                     agents=[researcher, writer],
-                    tasks=[task_research, task_writing],
+                    tasks=[t1, t2],
                     process=Process.sequential
                 )
 
-                st.write("🔍 Researcher పని మొదలుపెట్టాడు...")
-                result = crew_x.kickoff()
-                
-                status.update(label="✨ Analysis Complete!", state="complete", expanded=False)
+                st.write("📡 Researcher డేటాను సేకరిస్తున్నాడు...")
+                result = crew.kickoff()
+                status.update(label="✅ రీసెర్చ్ పూర్తయింది!", state="complete", expanded=False)
 
-            # --- Display Final Output ---
-            st.markdown("### 📄 Intelligence Report")
-            st.markdown(f'<div class="main-card">{result.raw}</div>', unsafe_allow_html=True)
+            # --- Results Display ---
+            st.markdown("### 📝 Intelligence Report")
+            st.markdown(f'<div class="report-box">{result.raw}</div>', unsafe_allow_html=True)
             
-            # Action Area
             st.download_button(
-                label="📥 Download as Markdown",
+                label="📥 Download Report",
                 data=result.raw,
                 file_name=f"CREW_X_{topic}.md",
                 mime="text/markdown"
             )
 
         except Exception as e:
-            st.error(f"Error encountered: {str(e)}")
+            st.error(f"Error: {e}")
 
-# Footer
-st.markdown("<br><hr><p style='text-align: center; opacity: 0.5;'>CREW-X Intelligence Engine © 2026</p>", unsafe_allow_html=True)
+# --- 6. Footer ---
+st.markdown("<br><hr><p style='text-align: center; color: #A0AEC0; font-size: 0.9rem;'>CREW-X Intelligence Engine © 2026</p>", unsafe_allow_html=True)
