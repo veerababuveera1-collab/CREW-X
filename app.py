@@ -11,7 +11,6 @@ def apply_ui_theme():
         <style>
         .stApp { background-color: #F8FAFC; }
         [data-testid="stSidebar"] { background-color: #FFFFFF; border-right: 1px solid #E2E8F0; }
-        
         .main-container {
             background-color: #FFFFFF;
             padding: 30px;
@@ -20,7 +19,6 @@ def apply_ui_theme():
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
         }
-        
         .title-text {
             font-family: 'Inter', sans-serif;
             color: #1E293B;
@@ -29,8 +27,6 @@ def apply_ui_theme():
             text-align: center;
             letter-spacing: -1px;
         }
-
-        /* Gradient Button */
         div.stButton > button:first-child {
             background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
             color: white;
@@ -41,12 +37,10 @@ def apply_ui_theme():
             width: 100%;
             transition: all 0.3s ease;
         }
-        
         div.stButton > button:hover {
             transform: translateY(-1px);
             box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
         }
-
         .output-box {
             background-color: #FFFFFF;
             padding: 25px;
@@ -117,9 +111,14 @@ if execute_btn:
         st.warning("Please enter a research topic.")
     else:
         try:
+            # FIX: Set dummy OpenAI key and disable telemetry to prevent the error
+            os.environ["OTEL_SDK_DISABLED"] = "true"
+            if "OPENAI_API_KEY" not in os.environ:
+                os.environ["OPENAI_API_KEY"] = "NA"
+
             with st.status("🧠 Agents are thinking...", expanded=True) as status:
                 
-                # LLM Setup
+                # LLM Setup - Explicitly define Groq
                 llm = ChatGroq(
                     groq_api_key=groq_api_key,
                     model_name="llama3-70b-8192",
@@ -131,16 +130,18 @@ if execute_btn:
                     role='Senior Research Analyst',
                     goal=f'Conduct in-depth research about {topic}',
                     backstory="You are an expert researcher with access to complex data patterns.",
-                    llm=llm,
-                    verbose=True
+                    llm=llm, # Pass LLM explicitly
+                    verbose=True,
+                    allow_delegation=False
                 )
 
                 writer = Agent(
                     role='Technical Content Strategist',
                     goal=f'Write a {tone} report about {topic} based on research',
                     backstory="You specialize in translating complex research into engaging articles.",
-                    llm=llm,
-                    verbose=True
+                    llm=llm, # Pass LLM explicitly
+                    verbose=True,
+                    allow_delegation=False
                 )
 
                 # Task Definitions
@@ -160,7 +161,8 @@ if execute_btn:
                 crew = Crew(
                     agents=[researcher, writer],
                     tasks=[task1, task2],
-                    process=Process.sequential
+                    process=Process.sequential,
+                    verbose=True
                 )
 
                 st.write("📡 Analyst gathering intelligence...")
