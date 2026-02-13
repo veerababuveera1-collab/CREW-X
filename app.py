@@ -2,197 +2,183 @@ import streamlit as st
 import os
 import requests
 from crewai import Agent, Task, Crew, Process
+from langchain_groq import ChatGroq
 from streamlit_lottie import st_lottie
 
-# --- 1. UI & Theme Configuration ---
-def apply_modern_theme():
+# --- 1. Modern UI Configuration ---
+def apply_ui_theme():
     st.markdown("""
         <style>
-        /* Main page background */
-        .stApp {
-            background-color: #F4F7F9;
-        }
+        .stApp { background-color: #F8FAFC; }
+        [data-testid="stSidebar"] { background-color: #FFFFFF; border-right: 1px solid #E2E8F0; }
         
-        /* Sidebar styling */
-        [data-testid="stSidebar"] {
-            background-color: #ffffff;
-            border-right: 1px solid #E6E8EB;
-        }
-
-        /* Card container for parameters */
-        .param-card {
-            background-color: #ffffff;
-            padding: 25px;
-            border-radius: 15px;
-            border: 1px solid #E6E8EB;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        .main-container {
+            background-color: #FFFFFF;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
         }
-
-        /* Branding Text */
-        .brand-title {
+        
+        .title-text {
             font-family: 'Inter', sans-serif;
-            color: #1A202C;
+            color: #1E293B;
             font-weight: 800;
             font-size: 3rem;
             text-align: center;
-            margin-bottom: 0px;
-        }
-        
-        .brand-subtitle {
-            text-align: center;
-            color: #718096;
-            font-size: 1rem;
-            margin-bottom: 30px;
+            letter-spacing: -1px;
         }
 
-        /* Custom Buttons */
+        /* Gradient Button */
         div.stButton > button:first-child {
-            background: linear-gradient(135deg, #3182CE 0%, #2B6CB0 100%);
+            background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
             color: white;
-            border-radius: 10px;
+            border-radius: 8px;
             border: none;
             padding: 12px 24px;
             font-weight: 600;
             width: 100%;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
         }
         
         div.stButton > button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(49, 130, 206, 0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
         }
 
-        /* Result Area */
-        .report-box {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 15px;
-            border-left: 6px solid #3182CE;
-            line-height: 1.7;
-            color: #2D3748;
+        .output-box {
+            background-color: #FFFFFF;
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 5px solid #2563EB;
+            color: #334155;
+            line-height: 1.6;
         }
         </style>
     """, unsafe_allow_html=True)
 
-def load_lottieurl(url: str):
-    r = requests.get(url)
-    if r.status_code != 200:
+def load_lottie(url):
+    try:
+        return requests.get(url).json()
+    except:
         return None
-    return r.json()
 
-# --- 2. Initial Setup ---
-st.set_page_config(page_title="CREW-X | Next-Gen AI", layout="wide", page_icon="⚡")
-apply_modern_theme()
+# --- 2. App Initialization ---
+st.set_page_config(page_title="CREW-X | AI Hub", layout="wide", page_icon="⚡")
+apply_ui_theme()
 
-# --- 3. Sidebar: Settings & Status ---
+# --- 3. Sidebar (Control Panel) ---
 with st.sidebar:
     st.markdown("## ⚙️ Settings")
-    api_key = st.text_input("OpenAI API Key:", type="password", placeholder="sk-...")
+    groq_api_key = st.text_input("Groq API Key:", type="password", placeholder="gsk_...")
+    st.caption("Get your free key at [console.groq.com](https://console.groq.com)")
     
-    if api_key:
-        os.environ["OPENAI_API_KEY"] = api_key
+    st.divider()
+    st.markdown("### 🤖 Engine Status")
+    st.success("Researcher Active")
+    st.success("Writer Active")
     
-    st.markdown("---")
-    st.markdown("### 🤖 Agents Active")
-    st.success("✅ Researcher")
-    st.success("✅ Writer")
-    
-    st.markdown("---")
-    lottie_sidebar = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_mDnmhAgZkb.json")
-    if lottie_sidebar:
-        st_lottie(lottie_sidebar, height=150)
+    lottie_side = load_lottie("https://assets5.lottiefiles.com/packages/lf20_mDnmhAgZkb.json")
+    if lottie_side:
+        st_lottie(lottie_side, height=150)
 
-# --- 4. Main Content Area ---
-st.markdown("<h1 class='brand-title'>CREW-X</h1>", unsafe_allow_html=True)
-st.markdown("<p class='brand-subtitle'>Next-Gen Multi-Agent Research Framework</p>", unsafe_allow_html=True)
+# --- 4. Main Layout ---
+st.markdown("<h1 class='title-text'>CREW-X</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #64748B; margin-top: -10px;'>High-Performance Multi-Agent Research Framework</p>", unsafe_allow_html=True)
 
-col_input, col_anim = st.columns([1.5, 1], gap="large")
+left_col, right_col = st.columns([1.4, 1], gap="large")
 
-with col_input:
-    st.markdown('<div class="param-card">', unsafe_allow_html=True)
+with left_col:
+    st.markdown('<div class="main-container">', unsafe_allow_html=True)
     st.subheader("🎯 Research Parameters")
     
-    topic = st.text_input("టాపిక్ ఎంటర్ చేయండి:", placeholder="ఉదా: Future of Agentic AI")
+    topic = st.text_input("Enter Topic:", placeholder="e.g. Next-gen solid-state batteries")
     
     c1, c2 = st.columns(2)
     with c1:
-        tone = st.selectbox("వ్యాసం యొక్క శైలి (Tone):", ["Professional", "Conversational", "Academic", "Creative"])
+        tone = st.selectbox("Content Tone:", ["Professional", "Technical", "Creative", "Concise"])
     with c2:
-        language = st.radio("భాష (Language):", ["Tanglish (Mix)", "Pure Telugu", "English"], horizontal=False)
+        length = st.select_slider("Length (Words):", options=[300, 500, 800, 1000])
     
     st.markdown('</div>', unsafe_allow_html=True)
-    run_btn = st.button("🚀 Start Intelligence Engine")
+    execute_btn = st.button("🚀 Run Intelligence Engine")
 
-with col_anim:
-    lottie_main = load_lottieurl("https://assets9.lottiefiles.com/packages/lf20_ai9m8yca.json")
-    if lottie_main:
-        st_lottie(lottie_main, height=300)
+with right_col:
+    main_anim = load_lottie("https://assets9.lottiefiles.com/packages/lf20_ai9m8yca.json")
+    if main_anim:
+        st_lottie(main_anim, height=300)
 
-# --- 5. Execution Logic ---
-if run_btn:
-    if not api_key:
-        st.error("🚨 దయచేసి సైడ్‌బార్‌లో OpenAI API Key ఎంటర్ చేయండి!")
+# --- 5. Logic Execution ---
+if execute_btn:
+    if not groq_api_key:
+        st.error("Please provide a Groq API Key in the sidebar.")
     elif not topic:
-        st.warning("⚠️ దయచేసి ఒక టాపిక్ ఇవ్వండి!")
+        st.warning("Please enter a research topic.")
     else:
         try:
-            with st.status("🧠 ఏజెంట్లు విశ్లేషిస్తున్నారు...", expanded=True) as status:
+            with st.status("🧠 Agents are thinking...", expanded=True) as status:
                 
+                # LLM Setup
+                llm = ChatGroq(
+                    groq_api_key=groq_api_key,
+                    model_name="llama3-70b-8192",
+                    temperature=0.5
+                )
+
                 # Agent Definitions
                 researcher = Agent(
                     role='Senior Research Analyst',
-                    goal=f'{topic} గురించి లోతైన సమాచారాన్ని సేకరించడం',
-                    backstory="మీరు ఒక నిపుణులైన పరిశోధకులు. ఇంటర్నెట్ నుండి ఖచ్చితమైన సమాచారాన్ని వెలికితీస్తారు.",
-                    verbose=True,
-                    allow_delegation=False
+                    goal=f'Conduct in-depth research about {topic}',
+                    backstory="You are an expert researcher with access to complex data patterns.",
+                    llm=llm,
+                    verbose=True
                 )
 
                 writer = Agent(
-                    role='Tech Content Strategist',
-                    goal=f'రీసెర్చ్ డేటా ఆధారంగా {topic} పై {tone} వ్యాసం రాయడం',
-                    backstory="మీరు క్లిష్టమైన విషయాలను సామాన్యులకు అర్థమయ్యేలా, ఆకర్షణీయంగా రాయగలరు.",
-                    verbose=True,
-                    allow_delegation=False
+                    role='Technical Content Strategist',
+                    goal=f'Write a {tone} report about {topic} based on research',
+                    backstory="You specialize in translating complex research into engaging articles.",
+                    llm=llm,
+                    verbose=True
                 )
 
                 # Task Definitions
-                t1 = Task(
-                    description=f"{topic} గురించి 5 ముఖ్యమైన అప్‌డేట్స్ మరియు ఫ్యాక్ట్స్ సేకరించు.",
+                task1 = Task(
+                    description=f"Analyze {topic} and provide 5 key breakthrough facts.",
                     agent=researcher,
-                    expected_output="వివరణాత్మకమైన బుల్లెట్ పాయింట్స్."
+                    expected_output="Bullet points of high-quality research data."
                 )
 
-                t2 = Task(
-                    description=f"సేకరించిన సమాచారాన్ని ఉపయోగించి {language} భాషలో ఒక ప్రొఫెషనల్ వ్యాసం రాయి. టోన్ {tone} గా ఉండాలి.",
+                task2 = Task(
+                    description=f"Using the research, write a {length}-word article in a {tone} tone.",
                     agent=writer,
-                    expected_output="300-500 పదాల వ్యాసం."
+                    expected_output="A professionally formatted Markdown article."
                 )
 
-                # Crew Formation
+                # Crew Assembly
                 crew = Crew(
                     agents=[researcher, writer],
-                    tasks=[t1, t2],
+                    tasks=[task1, task2],
                     process=Process.sequential
                 )
 
-                st.write("📡 Researcher డేటాను సేకరిస్తున్నాడు...")
+                st.write("📡 Analyst gathering intelligence...")
                 result = crew.kickoff()
-                status.update(label="✅ రీసెర్చ్ పూర్తయింది!", state="complete", expanded=False)
+                status.update(label="✅ Research Complete!", state="complete", expanded=False)
 
-            # --- Results Display ---
-            st.markdown("### 📝 Intelligence Report")
-            st.markdown(f'<div class="report-box">{result.raw}</div>', unsafe_allow_html=True)
+            # Display Results
+            st.markdown("### 📄 Final Intelligence Report")
+            st.markdown(f'<div class="output-box">{result.raw}</div>', unsafe_allow_html=True)
             
             st.download_button(
-                label="📥 Download Report",
+                label="📥 Download Report (.md)",
                 data=result.raw,
-                file_name=f"CREW_X_{topic}.md",
-                mime="text/markdown"
+                file_name=f"CREW_X_{topic.replace(' ', '_')}.md"
             )
 
         except Exception as e:
-            st.error(f"Error: {e}")
+            st.error(f"An error occurred: {str(e)}")
 
 # --- 6. Footer ---
-st.markdown("<br><hr><p style='text-align: center; color: #A0AEC0; font-size: 0.9rem;'>CREW-X Intelligence Engine © 2026</p>", unsafe_allow_html=True)
+st.markdown("<br><hr><p style='text-align: center; color: #94A3B8; font-size: 0.8rem;'>CREW-X Intelligence Engine © 2026 | Powered by Groq</p>", unsafe_allow_html=True)
